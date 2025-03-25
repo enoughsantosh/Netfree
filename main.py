@@ -1,9 +1,8 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 import httpx
-from bs4 import BeautifulSoup
 from fastapi.middleware.cors import CORSMiddleware
 import logging
-import re
 import json
 
 # Configure logging
@@ -35,7 +34,7 @@ async def fetch_cookie():
             return response.json()  # Assuming the API returns JSON data
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
-            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+            raise HTTPException(status_code=e.response.status_code, detail=str(e.response.text))
         except Exception as e:
             logger.error(f"Request failed: {str(e)}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
