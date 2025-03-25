@@ -4,6 +4,7 @@ import httpx
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import json
+from typing import Optional
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
