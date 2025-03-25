@@ -159,6 +159,41 @@ async def process_find(q: str, h: str):
                 "message": str(e)
             })
 
+
+@app.get("/pv")
+async def process_pvfind(q: str, h: str):
+    url = f"https://iosmirror.cc/pv/post.php?id={q}"
+    cookies = {"t_hash_t": h}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, cookies=cookies)
+            response.raise_for_status()
+
+            # Attempt to parse JSON
+            try:
+                result = response.json()
+                if result.get("status") == "y":
+                    return JSONResponse(content={"searchResult": result})
+                else:
+                    return JSONResponse(content={"message": result})
+            except ValueError:
+                return JSONResponse(status_code=500, content={
+                    "status": "failure", 
+                    "message": "Invalid JSON response from the server."
+                })
+        
+        except httpx.RequestError as e:
+            return JSONResponse(status_code=500, content={
+                "status": "failure", 
+                "message": f"Request error: {str(e)}"
+            })
+        except Exception as e:
+            return JSONResponse(status_code=500, content={
+                "status": "error", 
+                "message": str(e)
+            })
+
 @app.get("/e")
 async def process_epi(q: str, h: str, k: Optional[str] = None):
     url = f"https://iosmirror.cc/episodes.php?s={k}&series={q}"
