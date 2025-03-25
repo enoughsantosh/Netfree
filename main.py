@@ -63,3 +63,29 @@ async def process_search(q: str, h: str):
             return JSONResponse(status_code=500, content={"status": "failure", "message": f"Request error: {str(e)}"})
         except Exception as e:
             return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+
+@app.get("/sp")
+async def process_pvsearch(q: str, h: str):
+    url = f"https://iosmirror.cc/pv/search.php?s={q}"
+    cookies = {"t_hash_t": h}
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, cookies=cookies)
+            response.raise_for_status()
+
+            # Attempt to parse JSON
+            try:
+                result = response.json()
+                if result.get("status") == "y":
+                    return JSONResponse(content={"searchResult": result.get("searchResult", [])})
+                else:
+                    return JSONResponse(content={"message": result})
+            except ValueError:
+                return JSONResponse(status_code=500, content={"status": "failure", "message": "Invalid JSON response from the server."})
+        
+        except httpx.RequestError as e:
+            return JSONResponse(status_code=500, content={"status": "failure", "message": f"Request error: {str(e)}"})
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
+            
