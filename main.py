@@ -22,6 +22,20 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"message": "Anime Search API is running!"}
+    return {"message": "Movie Search API is running!"}
 
-
+@app.get("/cookie")
+async def fetch_cookie():
+    url = "https://netmirror.8man.me/api/cookie"
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url)
+            response.raise_for_status()  # Raise an error for non-200 responses
+            return response.json()  # Assuming the API returns JSON data
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error: {e.response.status_code} - {e.response.text}")
+            raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+        except Exception as e:
+            logger.error(f"Request failed: {str(e)}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
