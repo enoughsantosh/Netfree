@@ -24,4 +24,4 @@ app.add_middleware(
 def home():
     return {"message": "Anime Search API is running!"}
 
-@app.get("/home")
+
