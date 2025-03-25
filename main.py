@@ -40,61 +40,27 @@ async def fetch_cookie():
             logger.error(f"Request failed: {str(e)}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
-@app.route('/s', methods=['GET'])
-def process_search():
-    try:
-        # Get the hash value from the query parameters
-        s_value = request.args.get('q')
-        h_value = request.args.get('h')
+@app.get("/s")
+async def process_search(q: str, h: str):
+    url = f"https://iosmirror.cc/search.php?s={q}"
+    cookies = {"t_hash_t": h}
 
-        
-        url = f"https://iosmirror.cc/search.php?s={s_value}" 
-
-
-        cookies = {
-            "t_hash_t": h_value
-        }
-
-        
-        # Make the POST request
-        response = requests.get(url, cookies=cookies)
-
-        # Check for errors in the response
-        response.raise_for_status()
-        # If the response is JSON, process it
+    async with httpx.AsyncClient() as client:
         try:
-            result = response.json()
-            if result.get("status") == "y":
-                search_result = result.get("searchResult", [])
-                return jsonify({
-                    "searchResult": search_result
-                 
-                })
-            else:
-                return jsonify({
-                    "message": result
-                         })
-                
- 
-                
-                    
-               
+            response = await client.get(url, cookies=cookies)
+            response.raise_for_status()
 
-        except ValueError:
-            return jsonify({
-                "status": "failure",
-                "message": "Invalid JSON response from the server."
-            }), 500
-            
-    except requests.exceptions.RequestException as e:
-        # Handle network or HTTP errors
-        return jsonify({
-            "status": "failure",
-            "message": f"Request error: {str(e)}"
-        }), 500
-    except Exception as e:
-        # Catch any other exceptions
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+            # Attempt to parse JSON
+            try:
+                result = response.json()
+                if result.get("status") == "y":
+                    return JSONResponse(content={"searchResult": result.get("searchResult", [])})
+                else:
+                    return JSONResponse(content={"message": result})
+            except ValueError:
+                return JSONResponse(status_code=500, content={"status": "failure", "message": "Invalid JSON response from the server."})
+        
+        except httpx.RequestError as e:
+            return JSONResponse(status_code=500, content={"status": "failure", "message": f"Request error: {str(e)}"})
+        except Exception as e:
+            return JSONResponse(status_code=500, content={"status": "error", "message": str(e)})
