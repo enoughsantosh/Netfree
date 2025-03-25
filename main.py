@@ -263,3 +263,37 @@ async def process_epevi(q: str, h: str, k: Optional[str] = None):
                 "message": str(e)
             })
             
+@app.get("/mp")
+async def process_epi(q: str, h: str):
+    url = f"https://netfree.cc/pv/playlist.php?id={q}"
+    cookies = {
+        "t_hash_t": h,
+        "hd": "on",
+        "lang": "hin"
+    }
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, cookies=cookies)
+            response.raise_for_status()
+
+            # Attempt to parse JSON
+            try:
+                result = response.json()
+                return JSONResponse(content={"searchResult": result})
+            except ValueError:
+                return JSONResponse(status_code=500, content={
+                    "status": "failure", 
+                    "message": "Invalid JSON response from the server."
+                })
+        
+        except httpx.RequestError as e:
+            return JSONResponse(status_code=500, content={
+                "status": "failure", 
+                "message": f"Request error: {str(e)}"
+            })
+        except Exception as e:
+            return JSONResponse(status_code=500, content={
+                "status": "error", 
+                "message": str(e)
+            })
